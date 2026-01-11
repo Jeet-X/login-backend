@@ -60,6 +60,17 @@ class FirebaseService {
             throw new Error(`Failed to sign in: ${error.message}`);
         }
     }
+    async signInWithNumber(number) {
+        try {
+            // Get user by email
+            const userRecord = await admin.auth().getUserByPhoneNumber(number);
+            // Note: Password verification should be done client-side
+            // This is for server-side validation
+            return userRecord;
+        } catch (error) {
+            throw new Error(`Failed to sign in: ${error.message}`);
+        }
+    }
 
     async sendPasswordResetEmail(email) {
         try {

@@ -49,8 +49,8 @@ router.post(
         body('otp')
             .notEmpty().withMessage('OTP is required')
             .isLength({ min: 6, max: 6 }).withMessage('OTP must be 6 digits'),
-        body('verification_id')
-            .notEmpty().withMessage('Verification ID is required'),
+        // body('verification_id')
+        //     .notEmpty().withMessage('Verification ID is required'),
     ],
     validate,
     authController.verifyMobileOTP
@@ -199,12 +199,12 @@ router.post(
         body('mobile')
             .notEmpty().withMessage('Mobile number is required'),
         body('country_code')
-            .notEmpty().withMessage('Country code is required'),
-        body('otp')
-            .notEmpty().withMessage('OTP is required')
-            .isLength({ min: 6, max: 6 }).withMessage('OTP must be 6 digits'),
-        body('verification_id')
-            .notEmpty().withMessage('Verification ID is required'),
+            .notEmpty().withMessage('Country code is required')
+        // body('otp')
+        //     .notEmpty().withMessage('OTP is required')
+        //     .isLength({ min: 6, max: 6 }).withMessage('OTP must be 6 digits'),
+        // body('verification_id')
+        //     .notEmpty().withMessage('Verification ID is required'),
     ],
     validate,
     authController.loginWithMobile
@@ -369,7 +369,7 @@ router.get('/test', (req, res) => {
             },
             password_reset: {
                 forgot_email: 'POST /v1/auth/forgot-password/email',
-                forgot_mobile: 'POST /v1/auth/forgot-password/mobile',
+                // forgot_mobile: 'POST /v1/auth/forgot-password/mobile',
                 reset: 'POST /v1/auth/reset-password',
             },
             token: {

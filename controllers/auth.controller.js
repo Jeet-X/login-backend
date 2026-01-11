@@ -183,7 +183,7 @@ class AuthController {
                 email,
                 password,
                 confirm_password,
-                // firebase_uid,
+                firebase_uid,
                 referral_code,
             } = req.body;
 
@@ -368,17 +368,29 @@ class AuthController {
 
     async loginWithMobile(req, res, next) {
         try {
-            const { mobile, country_code, otp, verification_id } = req.body;
+            const { mobile, country_code, } = req.body;
             const fullMobile = `${country_code}${mobile}`;
 
             // Verify OTP with Firebase
-            const otpResult = await firebaseService.verifyMobileOTP(verification_id, otp);
+            // const otpResult = await firebaseService.verifyMobileOTP(verification_id, otp);
 
-            if (!otpResult.valid) {
-                return res.status(400).json({
+            // if (!otpResult.valid) {
+            //     return res.status(400).json({
+            //         success: false,
+            //         error: 'OTP_INVALID',
+            //         message: 'Invalid OTP code',
+            //     });
+            // }
+            // Verify password with Firebase
+
+
+
+            const fireBaseUser = await firebaseService.signInWithNumber(fullMobile);
+            if (!fireBaseUser) {
+                return res.status(401).json({
                     success: false,
-                    error: 'OTP_INVALID',
-                    message: 'Invalid OTP code',
+                    error: 'INVALID_CREDENTIALS',
+                    message: 'Invalid mobile number',
                 });
             }
 
@@ -447,7 +459,6 @@ class AuthController {
 
             // Check if user exists
             const user = await userModel.findByEmail(email.toLowerCase());
-
             // For security, always return success even if user doesn't exist
             if (!user) {
                 return res.json({
@@ -458,7 +469,7 @@ class AuthController {
 
             // Generate password reset link via Firebase
             const result = await firebaseService.sendPasswordResetEmail(email);
-
+            console.log(result)
             // Send email with reset link
             await emailService.sendPasswordResetEmail(email, result.link);
 
