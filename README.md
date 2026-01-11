@@ -42,7 +42,7 @@ cp .env.example .env
 # Edit .env with your configuration
 
 # Run migrations
-npm run migrate
+npm run db:setup
 
 # Start development server
 npm run dev
