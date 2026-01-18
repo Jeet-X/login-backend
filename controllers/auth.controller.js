@@ -239,17 +239,39 @@ class AuthController {
                 mobile: fullMobile,
                 is_email_verified: true,
                 is_mobile_verified: true,
-                referral_code: referral_code || null,
                 status: 'ACTIVE',
             };
 
             const user = await userModel.create(userData);
+
+            // Create referral code for new user
+            const referralService = require('@/services/referral.service');
+            await referralService.createReferralCodeForUser(user.id);
+
+            // CREATE WALLET FOR NEW USER
+            const walletModel = require('@/models/wallet/wallet.model');
+            await walletModel.create(user.id);
 
             // Generate JWT tokens
             const accessToken = jwtService.generateAccessToken({
                 userId: user.id,
                 email: user.email,
             });
+
+            // APPLY REFERRAL CODE IF PROVIDED
+            if (referral_code) {
+                const ipAddress = req.ip || req.connection.remoteAddress;
+                const deviceFingerprint = req.headers['x-device-fingerprint'] || null;
+
+                await referralService.applyReferralCode(
+                    referral_code,
+                    user.id,
+                    ipAddress,
+                    deviceFingerprint
+                );
+                await referralService.processReferralEligibility(user.id, 'FIRST_WALLET_ADD')
+
+            }
 
             const refreshToken = jwtService.generateRefreshToken({
                 userId: user.id,
@@ -469,7 +491,6 @@ class AuthController {
 
             // Generate password reset link via Firebase
             const result = await firebaseService.sendPasswordResetEmail(email);
-            console.log(result)
             // Send email with reset link
             await emailService.sendPasswordResetEmail(email, result.link);
 
