@@ -36,14 +36,21 @@ class FirebaseService {
 
     async createUserWithEmailPassword(email, password, phoneNumber) {
         try {
-            const userRecord = await admin.auth().createUser({
+            // const userRecord = await admin.auth().getUserByEmail(email);
+            // if (userRecord) {
+            //     return userRecord;
+            // }
+            // if (!userRecord) {
+            const newUserRecord = await admin.auth().createUser({
                 email,
                 password,
                 phoneNumber,
                 emailVerified: false
             });
-            return userRecord;
+            return newUserRecord;
+            // }
         } catch (error) {
+
             throw new Error(`Failed to create Firebase user: ${error.message}`);
         }
     }
