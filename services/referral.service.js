@@ -231,7 +231,7 @@ class ReferralService {
                 pending_referrals: parseInt(stats.pending_referrals) || 0,
                 total_earned_coins: parseInt(stats.total_earned_coins) || 0,
                 current_coin_balance: wallet ? wallet.coin_balance : 0,
-                terms_url: process.env.REFERRAL_TERMS_URL || 'https://yourapp.com/terms',
+                terms_url: process.env.REFERRAL_TERMS_URL || 'https://jeetx.com/terms',
             };
         } catch (error) {
             logger.error('Get referral summary error:', error);
