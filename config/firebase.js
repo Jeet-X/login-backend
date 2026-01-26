@@ -34,7 +34,7 @@ try {
         projectId: process.env.FIREBASE_PROJECT_ID,
     });
 
-    logger.info('✓ Firebase Admin SDK initialized successfully');
+    // logger.info('✓ Firebase Admin SDK initialized successfully');
     // logger.info(`✓ Firebase Project: ${process.env.FIREBASE_PROJECT_ID}`);
 } catch (error) {
     logger.error('Failed to initialize Firebase Admin SDK:', error);

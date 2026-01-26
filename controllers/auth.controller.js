@@ -329,6 +329,13 @@ class AuthController {
                 });
             }
 
+            if (user.role !== 'USER') {
+                return res.status(403).json({
+                    success: false,
+                    error: 'NOT_A_USER',
+                    message: 'Email is registered to another role.',
+                });
+            }
             // Check if user is blocked
             if (user.status === 'BLOCKED') {
                 return res.status(403).json({
@@ -358,6 +365,14 @@ class AuthController {
                 email: user.email,
             });
 
+            const notificationService = require('../services/notification.service');
+            await notificationService.sendSystemNotification(
+                user.id,
+                'LOGIN_SUCCESS',
+                {
+                    message: "Congratulations on loggin in to JeetX"
+                }
+            );
             // const refreshToken = jwtService.generateRefreshToken({
             //     userId: user.id,
             // });

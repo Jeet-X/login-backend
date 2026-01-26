@@ -3,6 +3,10 @@
 -- ==========================================
 
 -- Drop tables if they exist (for clean setup)
+DROP TABLE IF EXISTS user_categories CASCADE;
+
+DROP TABLE IF EXISTS user_roles CASCADE;
+
 DROP TABLE IF EXISTS notification_delivery_log CASCADE;
 
 DROP TABLE IF EXISTS user_fcm_tokens CASCADE;
@@ -36,7 +40,13 @@ CREATE EXTENSION IF NOT EXISTS "pgcrypto";
 CREATE TABLE users (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid (),
     firebase_uid VARCHAR(255) UNIQUE NOT NULL,
-    role VARCHAR(20) DEFAULT 'USER' CHECK (role IN ('USER', 'ADMIN')),
+    role VARCHAR(20) DEFAULT 'USER' CHECK (
+        role IN (
+            'USER',
+            'ADMIN',
+            'SUPER_ADMIN'
+        )
+    ),
     full_name VARCHAR(255) NOT NULL,
     email VARCHAR(255) UNIQUE NOT NULL,
     mobile VARCHAR(20) UNIQUE NOT NULL,
@@ -45,6 +55,7 @@ CREATE TABLE users (
     referral_code VARCHAR(20) UNIQUE,
     referred_by UUID REFERENCES users (id),
     referral_code_generated_at TIMESTAMP,
+    admin_permissions JSONB DEFAULT NULL,
     status VARCHAR(20) DEFAULT 'ACTIVE' CHECK (
         status IN ('ACTIVE', 'BLOCKED')
     ),
@@ -314,6 +325,30 @@ CREATE TABLE IF NOT EXISTS user_notification_preferences (
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
+-- ==========================================
+-- Tournaments Table
+-- ==========================================
+CREATE TABLE IF NOT EXISTS tournaments (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid (),
+    name VARCHAR(255) NOT NULL,
+    start_time TIMESTAMP NOT NULL,
+    end_time TIMESTAMP NOT NULL,
+    status VARCHAR(20) DEFAULT 'PENDING',
+    reminder_sent BOOLEAN DEFAULT FALSE,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+-- ==========================================
+-- Tournament Participants Table
+-- ==========================================
+
+CREATE TABLE IF NOT EXISTS tournament_participants (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid (),
+    tournament_id UUID NOT NULL REFERENCES tournaments (id),
+    user_id UUID NOT NULL REFERENCES users (id),
+    joined_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    UNIQUE (tournament_id, user_id)
+);
 -- ==========================================
 -- Indexes
 -- ==========================================

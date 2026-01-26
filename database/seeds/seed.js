@@ -1,5 +1,9 @@
 require('dotenv').config();
+require("module-alias/register");
+
 const { Pool } = require('pg');
+const firebaseService = require('@/services/firebase.service');
+const adminAuthController = require('@/controllers/admin/auth.controller');
 
 // Create a new pool specifically for seeding
 const pool = new Pool({
@@ -41,64 +45,93 @@ async function seedDatabase() {
         // Seed test users
         console.log('👤 Seeding test users...');
 
+
+
         const testUsers = [
             {
-                firebase_uid: 'test_firebase_uid_001',
-                full_name: 'John Doe',
-                email: 'john.doe@example.com',
-                mobile: '+911234567890',
+                full_name: 'Aritra Naharay',
+                email: 'aritranaharay@gmail.com',
+                mobile: '+919599904224',
+                country_code: '+91',
                 is_email_verified: true,
                 is_mobile_verified: true,
                 status: 'ACTIVE',
+                role: 'SUPER_ADMIN'
             },
             {
-                firebase_uid: 'test_firebase_uid_002',
-                full_name: 'Jane Smith',
-                email: 'jane.smith@example.com',
-                mobile: '+919876543210',
+                full_name: 'Himanshi P',
+                email: 'ph093279@gmail.com',
+                mobile: '+919499172303',
+                country_code: '+91',
                 is_email_verified: true,
                 is_mobile_verified: true,
                 status: 'ACTIVE',
+                role: 'USER'
             },
+
             {
-                firebase_uid: 'test_firebase_uid_003',
-                full_name: 'Bob Johnson',
-                email: 'bob.johnson@example.com',
-                mobile: '+915555555555',
-                is_email_verified: false,
+                full_name: 'Aritra N',
+                email: 'aritrasings@gmail.com',
+                mobile: '+919958050224',
+                country_code: '+91',
+                is_email_verified: true,
                 is_mobile_verified: true,
                 status: 'ACTIVE',
-            },
+                role: 'ADMIN'
+            }
         ];
 
         for (const user of testUsers) {
+            let admin_permissions = null
+            if (user.role !== 'USER') {
+                admin_permissions = adminAuthController.getDefaultPermissions()
+            }
+
+
+
+            const firebaseUser = await firebaseService.createUserWithEmailPassword(
+                user.email,
+                user.password,
+                user.mobile
+            );
             const query = `
         INSERT INTO users (
           firebase_uid, full_name, email, mobile,
-          is_email_verified, is_mobile_verified, status
+          is_email_verified, is_mobile_verified, status,role,admin_permissions
         )
-        VALUES ($1, $2, $3, $4, $5, $6, $7)
+        VALUES ($1, $2, $3, $4, $5, $6, $7,$8,$9)
         RETURNING id, email
       `;
 
             const result = await client.query(query, [
-                user.firebase_uid,
+                firebaseUser.uid,
                 user.full_name,
                 user.email,
                 user.mobile,
                 user.is_email_verified,
                 user.is_mobile_verified,
                 user.status,
+                user.role,
+                admin_permissions
             ]);
+            if (user.role === 'USER') {
+                const userId = result.rows[0].id
+                const referralService = require('@/services/referral.service');
+                await referralService.createReferralCodeForUser(userId);
+
+                // CREATE WALLET FOR NEW USER
+                const walletModel = require('@/models/wallet/wallet.model');
+                await walletModel.create(userId);
+            }
 
             console.log(`  ✓ Created user: ${result.rows[0].email}`);
         }
 
         console.log('\n✅ Database seeded successfully!\n');
         console.log('Test users created:');
-        console.log('  Email: john.doe@example.com');
-        console.log('  Email: jane.smith@example.com');
-        console.log('  Email: bob.johnson@example.com');
+        console.log('  Email: aritranaharay@gmail.com-SUPER_ADMIN');
+        console.log('  Email: ph093279@gmail.com-USER');
+        console.log('  Email: aritrasings@gmail.com-ADMIN');
         console.log('\nYou can use these emails for testing with any password\n');
 
         process.exit(0);

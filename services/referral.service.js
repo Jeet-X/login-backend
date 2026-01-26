@@ -201,6 +201,13 @@ class ReferralService {
             // Update referral status
             await referralModel.updateStatus(referral.id, 'COMPLETED', config.coins_per_referral);
 
+            const notificationService = require('@/services/notification.service');
+            await notificationService.sendSystemNotification(
+                referral.referrer_user_id,
+                'REFERRAL_COMPLETED',
+                { coins: config.coins_per_referral }
+            );
+
             await client.query('COMMIT');
 
             logger.info(`Referral rewards credited: ${config.coins_per_referral} coins to user ${referral.referrer_user_id}`);

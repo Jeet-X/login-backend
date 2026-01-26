@@ -3,6 +3,9 @@ const express = require('express');
 const cors = require('cors');
 const helmet = require('helmet');
 const v1Routes = require('@/routes/index.js');
+const adminRoutes = require('@/routes/admin/index.js');
+
+
 const errorHandler = require('@/middleware/errorHandler.middleware');
 const logger = require('@/utils/logger');
 
@@ -36,6 +39,9 @@ app.get('/health', (req, res) => {
 
 // Routes
 app.use('/api/v1', v1Routes);
+
+// Admin routes
+app.use('/admin/api/v1', adminRoutes);
 
 // 404 handler
 app.use((req, res) => {

@@ -232,9 +232,9 @@ class UserModel {
       INSERT INTO users (
         firebase_uid, full_name, email, mobile,
         is_email_verified, is_mobile_verified,
-        referral_code, status
+        referral_code, status,role
       )
-      VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
+      VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
       RETURNING *
     `;
 
@@ -247,6 +247,7 @@ class UserModel {
       userData.is_mobile_verified || false,
       userData.referral_code || null,
       userData.status || 'ACTIVE',
+      userData.role,
     ];
 
     const result = await db.query(query, values);
