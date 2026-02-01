@@ -22,25 +22,63 @@ async function seedDatabase() {
 
         // Check if tables exist
         const tablesExist = await client.query(`
-      SELECT table_name 
-      FROM information_schema.tables 
-      WHERE table_schema = 'public' 
-      AND table_name IN ('users', 'user_devices')
-    `);
+    SELECT table_name 
+    FROM information_schema.tables 
+    WHERE table_schema = 'public' 
+    AND table_name IN (
+        'users', 
+        'user_devices', 
+        'user_fcm_tokens',
+        'user_notifications',
+        'user_notification_preferences',
+        'referrals',
+        'wallets',
+        'wallet_transactions'
+    )
+`);
 
-        if (tablesExist.rows.length < 2) {
+        const requiredTables = [
+            'users',
+            'user_devices',
+            'user_fcm_tokens',
+            'user_notifications',
+            'user_notification_preferences',
+            'referrals',
+            'wallets',
+            'wallet_transactions'
+        ];
+
+        if (tablesExist.rows.length < requiredTables.length) {
             console.error('❌ Required tables do not exist!');
+            console.log('\nMissing tables:');
+            const existingTableNames = tablesExist.rows.map(row => row.table_name);
+            const missingTables = requiredTables.filter(table => !existingTableNames.includes(table));
+            missingTables.forEach(table => console.log(`  - ${table}`));
             console.log('\nPlease run migrations first:');
             console.log('  npm run migrate\n');
             process.exit(1);
         }
 
-        console.log('✓ Tables verified\n');
+        console.log('✓ All required tables verified\n');
 
         // Clear existing data
-        console.log('🗑️  Clearing existing data...');
-        await client.query('TRUNCATE users, user_devices CASCADE');
-        console.log('✓ Data cleared\n');
+        console.log('🗑️  Clearing existing user data...');
+
+        // Truncate in correct order (respecting foreign key constraints)
+        await client.query(`
+    TRUNCATE 
+        wallet_transactions,
+        wallets,
+        user_fcm_tokens,
+        user_notifications,
+        user_notification_preferences,
+        referrals,
+        user_devices,
+        users
+    CASCADE
+`);
+
+        console.log('✓ User data cleared\n');
 
         // Seed test users
         console.log('👤 Seeding test users...');
@@ -121,7 +159,7 @@ async function seedDatabase() {
 
                 // CREATE WALLET FOR NEW USER
                 const walletModel = require('@/models/wallet/wallet.model');
-                await walletModel.create(userId);
+                await walletModel.create(userId, 10000000);
             }
 
             console.log(`  ✓ Created user: ${result.rows[0].email}`);

@@ -32,6 +32,13 @@ async function sendPushNotification(userId, notification) {
             return { success: false, reason: 'NO_TOKENS' };
         }
 
+        const notificationData = {};
+        if (notification.data) {
+            Object.keys(notification.data).forEach(key => {
+                notificationData[key] = String(notification.data[key]);
+            });
+        }
+
         const message = {
             notification: {
                 title: notification.title,
@@ -47,18 +54,21 @@ async function sendPushNotification(userId, notification) {
         };
 
         const response = await admin.admin.messaging().sendEachForMulticast(message);
+        console.log("Push notification response:", response);
 
         // Handle invalid tokens
         if (response.failureCount > 0) {
+            const invalidationPromises = [];
             response.responses.forEach((resp, idx) => {
                 if (!resp.success && resp.error) {
                     const errorCode = resp.error.code;
                     if (errorCode === 'messaging/invalid-registration-token' ||
                         errorCode === 'messaging/registration-token-not-registered') {
-                        fcmTokenModel.deactivateToken(tokens[idx]);
+                        invalidationPromises.push(fcmTokenModel.deactivateToken(tokens[idx]));
                     }
                 }
             });
+            await Promise.all(invalidationPromises);
         }
 
         // Log delivery
@@ -118,14 +128,20 @@ async function sendBulkNotifications(userIds, notificationData) {
         errors: [],
     };
 
-    for (const userId of userIds) {
-        try {
-            await sendToUser(userId, notificationData);
-            results.success++;
-        } catch (error) {
-            results.failed++;
-            results.errors.push({ userId, error: error.message });
-        }
+    const batchSize = 100;
+    for (let i = 0; i < userIds.length; i += batchSize) {
+        const batch = userIds.slice(i, i + batchSize);
+        const batchPromises = batch.map(async (userId) => {
+
+            try {
+                await sendToUser(userId, notificationData);
+                results.success++;
+            } catch (error) {
+                results.failed++;
+                results.errors.push({ userId, error: error.message });
+            }
+        });
+        await Promise.all(batchPromises);
     }
 
     return results;
@@ -157,6 +173,11 @@ async function getUsersBySegment(segment) {
         query += ' AND id IN (SELECT DISTINCT user_id FROM game_history)';
     } else if (segment === 'WALLET_USERS') {
         query += ' AND id IN (SELECT DISTINCT user_id FROM wallets WHERE coin_balance > 0)';
+    }
+    else if (segment === 'QUIZ_PLAYERS') {
+        query += ' AND id IN (SELECT DISTINCT user_id FROM quiz_sessions)';
+    } else if (segment === 'TOURNAMENT_PLAYERS') {
+        query += ' AND id IN (SELECT DISTINCT user_id FROM quiz_sessions WHERE slot_id IS NOT NULL)';
     }
 
     const result = await db.query(query);
@@ -254,6 +275,46 @@ class NotificationService {
                 category: 'SYSTEM',
                 screen_redirect: 'WalletScreen',
             },
+            WALLET_DEBITED: {
+                title: '💸 Coins Deducted',
+                message: `${data.amount} coins deducted from your wallet for ${data.reason}`,
+                category: 'SYSTEM',
+                screen_redirect: 'WalletScreen',
+                delivery_mode: 'BOTH',
+            },
+            // Quiz Practice Mode notifications
+            PRACTICE_REFUND: {
+                title: '🎯 Practice Refund',
+                message: `Great job! You scored ${data.scorePercentage}%. ${data.refundCoins} coins refunded to your wallet.`,
+                category: 'GAME',
+                screen_redirect: 'WalletScreen',
+                delivery_mode: 'BOTH',
+            },
+            PRACTICE_NO_REFUND: {
+                title: '📚 Keep Practicing',
+                message: `You scored ${data.scorePercentage}%. Score 60% or more to earn refund coins!`,
+                category: 'GAME',
+                screen_redirect: 'HomeScreen',
+                delivery_mode: 'BOTH',
+            },
+            // Tournament Result notifications
+            TOURNAMENT_RESULT_PERSONAL: {
+                title: '🏆 Tournament Result',
+                message: data.rank <= 3
+                    ? `Congratulations! You ranked #${data.rank} and won ${data.coinsWon} coins!`
+                    : `You ranked #${data.rank} in the tournament. Keep improving!`,
+                category: 'GAME',
+                screen_redirect: 'TournamentResultScreen',
+                delivery_mode: 'BOTH',
+            },
+            TOURNAMENT_RESULT_FULL: {
+                title: '📊 Tournament Leaderboard',
+                message: `View complete results for ${data.tournamentName}`,
+                category: 'INFO',
+                screen_redirect: 'TournamentResultScreen',
+                delivery_mode: 'IN_APP',
+            },
+
             GAME_RESULT: {
                 title: '🎮 Game Results',
                 message: data.message,
@@ -283,6 +344,35 @@ class NotificationService {
             ...notification,
             data,
         });
+    }
+
+
+    /**
+     * Send practice mode result notification
+     */
+    async sendPracticeResult(userId, sessionData) {
+        try {
+            const { score, totalQuestions, refundCoins } = sessionData;
+            const scorePercentage = Math.round((score / totalQuestions) * 100);
+
+            if (refundCoins > 0) {
+                await this.sendSystemNotification(userId, 'PRACTICE_REFUND', {
+                    scorePercentage,
+                    refundCoins,
+                    score,
+                    totalQuestions,
+                });
+            } else {
+                await this.sendSystemNotification(userId, 'PRACTICE_NO_REFUND', {
+                    scorePercentage,
+                    score,
+                    totalQuestions,
+                });
+            }
+        } catch (error) {
+            logger.error('Send practice result error:', error);
+            // Don't throw - notification failure shouldn't break practice completion
+        }
     }
 
 

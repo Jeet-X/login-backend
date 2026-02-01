@@ -54,14 +54,14 @@ CREATE TABLE users (
     is_mobile_verified BOOLEAN DEFAULT FALSE,
     referral_code VARCHAR(20) UNIQUE,
     referred_by UUID REFERENCES users (id),
-    referral_code_generated_at TIMESTAMP,
+    referral_code_generated_at TIMESTAMPTZ,
     admin_permissions JSONB DEFAULT NULL,
     status VARCHAR(20) DEFAULT 'ACTIVE' CHECK (
         status IN ('ACTIVE', 'BLOCKED')
     ),
-    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    last_login_at TIMESTAMP
+    created_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP,
+    last_login_at TIMESTAMPTZ
 );
 
 -- ==========================================
@@ -72,11 +72,11 @@ CREATE TABLE user_devices (
     user_id UUID NOT NULL REFERENCES users (id) ON DELETE CASCADE,
     device_fingerprint VARCHAR(255) NOT NULL,
     device_info JSONB,
-    last_login_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    last_login_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP,
     status VARCHAR(20) DEFAULT 'TRUSTED' CHECK (
         status IN ('TRUSTED', 'BLOCKED')
     ),
-    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+    created_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP
 );
 
 -- ==========================================
@@ -98,12 +98,12 @@ CREATE TABLE referrals (
     ),
     coins_awarded INTEGER DEFAULT 0,
     eligibility_met BOOLEAN DEFAULT FALSE,
-    eligibility_met_at TIMESTAMP,
+    eligibility_met_at TIMESTAMPTZ,
     ip_address VARCHAR(50),
     device_fingerprint VARCHAR(255),
-    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    completed_at TIMESTAMP,
+    created_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP,
+    completed_at TIMESTAMPTZ,
     CONSTRAINT uq_referral_pair UNIQUE (
         referrer_user_id,
         referred_user_id
@@ -118,10 +118,20 @@ CREATE TABLE referrals (
 
 CREATE TABLE IF NOT EXISTS wallets (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid (),
-    user_id UUID UNIQUE NOT NULL REFERENCES users (id) ON DELETE CASCADE,
+    user_id UUID NOT NULL REFERENCES users (id) ON DELETE CASCADE,
     coin_balance INTEGER DEFAULT 0 CHECK (coin_balance >= 0),
-    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+    total_earned INTEGER DEFAULT 0,
+    total_spent INTEGER DEFAULT 0,
+    status VARCHAR(20) DEFAULT 'ACTIVE' CHECK (
+        status IN (
+            'ACTIVE',
+            'FROZEN',
+            'SUSPENDED'
+        )
+    ),
+    created_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP,
+    UNIQUE (user_id)
 );
 
 -- ==========================================
@@ -131,16 +141,38 @@ CREATE TABLE IF NOT EXISTS wallet_transactions (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid (),
     user_id UUID NOT NULL REFERENCES users (id) ON DELETE CASCADE,
     wallet_id UUID NOT NULL REFERENCES wallets (id) ON DELETE CASCADE,
-    coins INTEGER NOT NULL,
-    transaction_type VARCHAR(20) NOT NULL CHECK (
-        transaction_type IN ('CREDIT', 'DEBIT')
+    transaction_type VARCHAR(50) NOT NULL CHECK (
+        transaction_type IN (
+            'CREDIT',
+            'DEBIT',
+            'REFERRAL_BONUS',
+            'PRACTICE_ENTRY',
+            'PRACTICE_REFUND',
+            'TOURNAMENT_ENTRY',
+            'TOURNAMENT_REWARD',
+            'TOURNAMENT_CANCELLED_REFUND',
+            'ADMIN_CREDIT',
+            'ADMIN_DEBIT',
+            'PURCHASE',
+            'REWARD'
+        )
     ),
-    source VARCHAR(50) NOT NULL,
+    amount INTEGER NOT NULL,
     reference_id UUID,
+    reference_type VARCHAR(50),
     description TEXT,
+    metadata JSONB,
     balance_before INTEGER NOT NULL,
     balance_after INTEGER NOT NULL,
-    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+    status VARCHAR(20) DEFAULT 'COMPLETED' CHECK (
+        status IN (
+            'PENDING',
+            'COMPLETED',
+            'FAILED',
+            'REVERSED'
+        )
+    ),
+    created_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP
 );
 
 -- ==========================================
@@ -155,8 +187,8 @@ CREATE TABLE IF NOT EXISTS referral_config (
     max_referrals_per_user INTEGER DEFAULT NULL,
     referral_expiry_days INTEGER DEFAULT NULL,
     is_active BOOLEAN DEFAULT TRUE,
-    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    created_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP,
     CONSTRAINT uq_referral_config_active UNIQUE (is_active)
 );
 
@@ -202,7 +234,7 @@ CREATE TABLE IF NOT EXISTS admin_notification_campaigns (
     target_segment VARCHAR(50),
     screen_redirect VARCHAR(100),
     data JSONB,
-    schedule_at TIMESTAMP,
+    schedule_at TIMESTAMPTZ,
     status VARCHAR(20) DEFAULT 'CREATED' CHECK (
         status IN (
             'CREATED',
@@ -217,9 +249,9 @@ CREATE TABLE IF NOT EXISTS admin_notification_campaigns (
     sent_count INTEGER DEFAULT 0,
     failed_count INTEGER DEFAULT 0,
     created_by UUID REFERENCES users (id),
-    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    sent_at TIMESTAMP
+    created_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP,
+    sent_at TIMESTAMPTZ
 );
 
 -- ==========================================
@@ -244,12 +276,12 @@ CREATE TABLE IF NOT EXISTS user_notifications (
         delivery_mode IN ('IN_APP', 'PUSH', 'BOTH')
     ),
     is_read BOOLEAN DEFAULT FALSE,
-    read_at TIMESTAMP,
+    read_at TIMESTAMPTZ,
     screen_redirect VARCHAR(100),
     data JSONB,
     campaign_id UUID,
-    expires_at TIMESTAMP,
-    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+    expires_at TIMESTAMPTZ,
+    created_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP
 );
 
 -- ==========================================
@@ -261,8 +293,8 @@ CREATE TABLE IF NOT EXISTS admin_notification_targets (
     campaign_id UUID NOT NULL REFERENCES admin_notification_campaigns (id) ON DELETE CASCADE,
     user_id UUID NOT NULL REFERENCES users (id) ON DELETE CASCADE,
     is_sent BOOLEAN DEFAULT FALSE,
-    sent_at TIMESTAMP,
-    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    sent_at TIMESTAMPTZ,
+    created_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP,
     UNIQUE (campaign_id, user_id)
 );
 
@@ -279,8 +311,8 @@ CREATE TABLE IF NOT EXISTS user_fcm_tokens (
     ),
     device_id VARCHAR(255),
     is_active BOOLEAN DEFAULT TRUE,
-    last_used_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    last_used_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP,
+    created_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP,
     UNIQUE (user_id, fcm_token)
 );
 
@@ -304,7 +336,7 @@ CREATE TABLE IF NOT EXISTS notification_delivery_log (
     ),
     error_message TEXT,
     fcm_message_id VARCHAR(255),
-    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+    created_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP
 );
 
 -- ==========================================
@@ -321,8 +353,8 @@ CREATE TABLE IF NOT EXISTS user_notification_preferences (
     enable_reminder_notifications BOOLEAN DEFAULT TRUE,
     quiet_hours_start TIME,
     quiet_hours_end TIME,
-    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+    created_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP
 );
 
 -- ==========================================
@@ -331,11 +363,11 @@ CREATE TABLE IF NOT EXISTS user_notification_preferences (
 CREATE TABLE IF NOT EXISTS tournaments (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid (),
     name VARCHAR(255) NOT NULL,
-    start_time TIMESTAMP NOT NULL,
-    end_time TIMESTAMP NOT NULL,
+    start_time TIMESTAMPTZ NOT NULL,
+    end_time TIMESTAMPTZ NOT NULL,
     status VARCHAR(20) DEFAULT 'PENDING',
     reminder_sent BOOLEAN DEFAULT FALSE,
-    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+    created_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP
 );
 
 -- ==========================================
@@ -346,7 +378,7 @@ CREATE TABLE IF NOT EXISTS tournament_participants (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid (),
     tournament_id UUID NOT NULL REFERENCES tournaments (id),
     user_id UUID NOT NULL REFERENCES users (id),
-    joined_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    joined_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP,
     UNIQUE (tournament_id, user_id)
 );
 -- ==========================================
@@ -441,20 +473,11 @@ CREATE TRIGGER update_users_updated_at
     FOR EACH ROW
     EXECUTE FUNCTION update_updated_at_column();
 
--- Trigger function to update updated_at timestamp for referrals
-CREATE OR REPLACE FUNCTION update_referral_updated_at()
-RETURNS TRIGGER AS $$
-BEGIN
-    NEW.updated_at = CURRENT_TIMESTAMP;
-    RETURN NEW;
-END;
-$$ LANGUAGE plpgsql;
-
 -- Apply trigger to referrals table
 CREATE TRIGGER update_referrals_updated_at
     BEFORE UPDATE ON referrals
     FOR EACH ROW
-    EXECUTE FUNCTION update_referral_updated_at();
+    EXECUTE FUNCTION update_updated_at_column();
 
 -- Apply trigger to wallets table
 CREATE TRIGGER update_wallets_updated_at
@@ -462,25 +485,15 @@ CREATE TRIGGER update_wallets_updated_at
     FOR EACH ROW
     EXECUTE FUNCTION update_updated_at_column();
 
--- Triggers
-CREATE OR REPLACE FUNCTION update_campaign_updated_at()
-RETURNS TRIGGER AS $$
-BEGIN
-    NEW.updated_at = CURRENT_TIMESTAMP;
-    RETURN NEW;
-END;
-$$ LANGUAGE plpgsql;
-
 CREATE TRIGGER update_campaigns_updated_at
     BEFORE UPDATE ON admin_notification_campaigns
     FOR EACH ROW
-    EXECUTE FUNCTION update_campaign_updated_at();
+    EXECUTE FUNCTION update_updated_at_column();
 
 CREATE TRIGGER update_notification_prefs_updated_at
     BEFORE UPDATE ON user_notification_preferences
     FOR EACH ROW
     EXECUTE FUNCTION update_updated_at_column();
-
 -- ==========================================
 -- Success Notification
 -- ==========================================

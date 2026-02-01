@@ -42,6 +42,7 @@
 const cron = require('node-cron');
 const notificationService = require('../services/notification.service');
 const campaignModel = require('@/models/campaign/campaign.model');
+const quizService = require('@/services/quiz.service');
 const db = require('../config/database');
 const logger = require('../utils/logger');
 
@@ -71,9 +72,42 @@ class NotificationScheduler {
         // 5. Weekly results notifications - Every Sunday at 6 PM
         this.scheduleWeeklyResults();
 
+        // Run every minute to check for tournaments that need finalization
+        this.finalizeCompletedTournaments();
+
         logger.info('✅ Notification schedulers initialized');
     }
 
+    async finalizeCompletedTournaments() {
+        const job = cron.schedule('* * * * *', async () => {
+            try {
+
+                logger.debug('Running tournament finalisation scheduler...')
+                const query = `
+            SELECT id FROM tournament_slots
+            WHERE status IN ('SCHEDULED', 'ACTIVE')
+            AND end_time < NOW()
+        `;
+
+                const result = await db.query(query);
+
+                for (const slot of result.rows) {
+                    try {
+                        await quizService.finalizeTournament(slot.id);
+                        logger.info(`Finalized tournament: ${slot.id}`);
+                    } catch (error) {
+                        logger.error(`Error finalizing tournament ${slot.id}:`, error);
+                    }
+                }
+            } catch (err) {
+                logger.error('Tournament Finalisation scheduler error:', err);
+
+            }
+        }
+        );
+
+        this.jobs.push({ name: 'tournamentFinalisation', job });
+    }
     /**
      * Tournament ending reminders
      */
@@ -194,7 +228,7 @@ class NotificationScheduler {
             try {
                 logger.info('Running expired notifications cleanup...');
 
-                const notificationModel = require('../models/notification.model');
+                const notificationModel = require('../models/notifications/notifications.model');
                 const count = await notificationModel.deleteExpired();
 
                 logger.info(`Deleted ${count} expired notifications`);
@@ -216,7 +250,7 @@ class NotificationScheduler {
             try {
                 logger.info('Running inactive FCM tokens cleanup...');
 
-                const fcmTokenModel = require('../models/fcmToken.model');
+                const fcmTokenModel = require('../models/fcmToken/fcmToken.model');
                 const count = await fcmTokenModel.cleanupInactiveTokens(30);
 
                 logger.info(`Deleted ${count} inactive FCM tokens`);

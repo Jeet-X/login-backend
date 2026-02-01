@@ -22,18 +22,29 @@ async function runMigrations() {
         // eslint-disable-next-line no-undef
         const schemaPath = path.join(__dirname, 'schema.sql');
 
-        if (!fs.existsSync(schemaPath)) {
-            console.error('❌ schema.sql file not found at:', schemaPath);
-            console.log('\nPlease create database/schema.sql with the schema provided in the artifacts');
-            process.exit(1);
+        // eslint-disable-next-line no-undef
+        const quizSchemaPath = path.join(__dirname, 'quiz.schema.sql');
+
+        const schemaArrays = [
+            schemaPath,
+            quizSchemaPath
+        ]
+
+        for (const schemaFilePath of schemaArrays) {
+            if (!fs.existsSync(schemaFilePath)) {
+                console.error('❌ schema.sql file not found at:', schemaFilePath);
+                console.log('\nPlease create database/schema.sql with the schema provided in the artifacts');
+                process.exit(1);
+            }
+
+            const schema = fs.readFileSync(schemaFilePath, 'utf8');
+            console.log(`🧱 Running ${path.basename(schemaFilePath, ".sql")} schema`);
+
+            // Execute the schema
+            await client.query(schema);
         }
 
-        const schema = fs.readFileSync(schemaPath, 'utf8');
 
-        console.log('📝 Executing schema...');
-
-        // Execute the schema
-        await client.query(schema);
 
         // console.log('\n✅ Database migration completed successfully!\n');
         // console.log('Tables created:');
