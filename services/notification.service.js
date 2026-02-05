@@ -12,7 +12,7 @@ async function logDelivery(notificationId, userId, deliveryType, status, errorMe
     const query = `
       INSERT INTO notification_delivery_log (
         notification_id, user_id, delivery_type, status, error_message
-      )
+        )
       VALUES ($1, $2, $3, $4, $5)
     `;
 
@@ -105,9 +105,9 @@ async function sendToUser(userId, notificationData) {
 
 
         // Send push notification if enabled
-        // if (notificationData.delivery_mode === 'PUSH' || notificationData.delivery_mode === 'BOTH') {
-        await sendPushNotification(userId, notification);
-        // }
+        if (notificationData.delivery_mode === 'PUSH' || notificationData.delivery_mode === 'BOTH') {
+            await sendPushNotification(userId, notification);
+        }
 
         logger.info(`Notification sent to user ${userId}: ${notification.title}`);
         return notification;
@@ -320,18 +320,23 @@ class NotificationService {
                 message: data.message,
                 category: 'GAME',
                 screen_redirect: 'ResultsScreen',
+                delivery_mode: 'BOTH',
+
             },
             WEEKLY_RESULTS: {
                 title: '🎮 Game Results',
                 message: data.message,
                 category: 'GAME',
                 screen_redirect: 'ResultsScreen',
+                delivery_mode: 'BOTH',
+
             },
             LOGIN_SUCCESS: {
                 title: '🎮 Login Successful',
                 message: data.message,
                 category: 'SYSTEM',
                 screen_redirect: null,
+                delivery_mode: 'PUSH',
             },
         };
 

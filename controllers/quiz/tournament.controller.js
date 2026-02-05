@@ -28,7 +28,6 @@ class AdminTournamentController {
                 });
             }
 
-            console.log(slotData.start_time, slotData.end_time, endTime, startTime, new Date())
 
             // Validate reward distribution
             const totalPercentage = Object.values(slotData.reward_distribution)
@@ -311,7 +310,7 @@ class AdminTournamentController {
     async finalizeSlot(req, res) {
         try {
             const { id } = req.params;
-            const quizService = require('@/services/quiz/quiz.service');
+            const quizService = require('@/services/quiz.service');
 
             const result = await quizService.finalizeTournament(id);
 

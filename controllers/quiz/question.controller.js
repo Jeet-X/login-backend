@@ -36,8 +36,7 @@ class AdminQuestionController {
      */
     async getQuestions(req, res) {
         try {
-            const { sub_category_id, difficulty, status, limit = 50, offset = 0 } = req.query;
-
+            const { sub_category_id, difficulty, status, limit = 1000, offset = 0 } = req.query;
             let query = 'SELECT * FROM quiz_questions WHERE 1=1';
             const params = [];
             let paramCount = 1;
@@ -183,7 +182,7 @@ class AdminQuestionController {
 
             res.json({
                 success: true,
-                message: `Question ${status.toLowerCase()} successfully`,
+                message: `Question status changed to ${status.toLowerCase()} successfully`,
                 data: question
             });
         } catch (error) {

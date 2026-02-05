@@ -285,7 +285,6 @@ class QuizService {
             }
 
             const slot = await tournamentSlotModel.findById(session.slot_id);
-
             if (new Date() < new Date(slot.start_time)) {
                 throw new Error('Tournament has not started yet');
             }

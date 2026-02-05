@@ -1,6 +1,4 @@
-// ==========================================
-// src/controllers/auth.controller.js - COMPLETE VERSION
-// ==========================================
+
 const firebaseService = require('@/services/firebase.service');
 const otpService = require('@/services/otp.service');
 const passwordService = require('@/services/password.service');
@@ -370,7 +368,7 @@ class AuthController {
                 user.id,
                 'LOGIN_SUCCESS',
                 {
-                    message: "Congratulations on loggin in to JeetX"
+                    message: "Congratulations on logging in to JeetX"
                 }
             );
             // const refreshToken = jwtService.generateRefreshToken({

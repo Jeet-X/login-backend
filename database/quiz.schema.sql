@@ -187,22 +187,22 @@ CREATE TABLE IF NOT EXISTS terms_acceptance_logs (
 
 -- Migration 9: Create notification_delivery_log table (if not exists)
 CREATE TABLE IF NOT EXISTS notification_delivery_log (
---     id UUID PRIMARY KEY DEFAULT gen_random_uuid (),
---     notification_id UUID NOT NULL,
---     user_id UUID NOT NULL REFERENCES users (id) ON DELETE CASCADE,
---     delivery_type VARCHAR(20) NOT NULL CHECK (
---         delivery_type IN ('PUSH', 'IN_APP', 'BOTH')
---     ),
---     status VARCHAR(20) NOT NULL CHECK (
---         status IN (
---             'SUCCESS',
---             'FAILED',
---             'PENDING'
---         )
---     ),
---     error_message TEXT,
---     created_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP
--- );
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid (),
+    notification_id UUID NOT NULL,
+    user_id UUID NOT NULL REFERENCES users (id) ON DELETE CASCADE,
+    delivery_type VARCHAR(20) NOT NULL CHECK (
+        delivery_type IN ('PUSH', 'IN_APP', 'BOTH')
+    ),
+    status VARCHAR(20) NOT NULL CHECK (
+        status IN (
+            'SUCCESS',
+            'FAILED',
+            'PENDING'
+        )
+    ),
+    error_message TEXT,
+    created_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP
+);
 
 -- ============================================================================
 -- INDEXES for Performance

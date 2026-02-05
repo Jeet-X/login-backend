@@ -9,10 +9,9 @@ class AdminPracticeConfigController {
     async createConfig(req, res) {
         try {
             const configData = req.body;
-
             // Validate refund rules
             const refundRules = configData.refund_rules;
-            if (!refundRules['80'] || !refundRules['60'] || !refundRules['0']) {
+            if (!(refundRules['80'].toString().length > 0) || !(refundRules['60'].toString().length > 0) || !(refundRules['0'].toString().length > 0)) {
                 return res.status(400).json({
                     success: false,
                     message: 'Refund rules must include thresholds for 80%, 60%, and 0%'

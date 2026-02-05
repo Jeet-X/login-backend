@@ -43,7 +43,6 @@ class AdminQuestionSetController {
     async getSets(req, res) {
         try {
             const { sub_category_id, mode, limit = 50, offset = 0 } = req.query;
-            console.log(sub_category_id)
             let query = `
                 SELECT qs.*, qsc.name as sub_category_name
                 FROM question_sets qs
@@ -69,7 +68,6 @@ class AdminQuestionSetController {
             params.push(limit, offset);
 
             const result = await db.query(query, params);
-
             res.json({
                 success: true,
                 data: result.rows
