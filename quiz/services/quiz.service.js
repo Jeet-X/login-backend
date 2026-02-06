@@ -15,6 +15,7 @@ class QuizService {
     async getEntryOptions(userId, subCategoryId) {
         const wallet = await walletService.getBalance(userId);
         const practiceConfig = await practiceConfigModel.findBySubCategory(subCategoryId);
+        await tournamentSlotModel.updateAllStatus();
         const tournamentSlots = await tournamentSlotModel.findActiveSlots(subCategoryId);
 
         return {
@@ -44,7 +45,6 @@ class QuizService {
         try {
             // Check for active session
             const activeSession = await quizSessionModel.findActiveSession(userId, 'PRACTICE');
-            console.log(activeSession)
             if (activeSession) {
                 throw new Error('You already have an active practice session');
             }

@@ -14,14 +14,22 @@ class TournamentSlotModel {
 
     async findActiveSlots(subCategoryId = null) {
         let query = `
-            SELECT ts.*, qsc.name as sub_category_name,
-                   (ts.max_players - ts.current_players) as available_spots
-            FROM tournament_slots ts
-            JOIN quiz_sub_categories qsc ON ts.sub_category_id = qsc.id
-            WHERE ts.status = 'SCHEDULED' 
-            AND ts.start_time > NOW()
+            SELECT
+                ts.*,
+                qsc.name as sub_category_name,
+                (ts.max_players - ts.current_players) as available_spots
+            FROM
+                tournament_slots ts
+            JOIN
+                quiz_sub_categories qsc ON ts.sub_category_id = qsc.id
+            WHERE ts.status IN ('SCHEDULED','ACTIVE')
             AND ts.current_players < ts.max_players
-        `;
+            AND (
+                (ts.status = 'SCHEDULED' AND ts.end_time > NOW())
+                OR
+                (ts.status = 'ACTIVE')
+            )
+            `;
         const params = [];
 
         if (subCategoryId) {
@@ -53,7 +61,18 @@ class TournamentSlotModel {
         const result = await db.query(query, [status, slotId]);
         return result.rows[0];
     }
-
+    async updateAllStatus() {
+        const query = `
+     UPDATE tournament_slots
+    SET status = 'ACTIVE',
+        updated_at = NOW()
+    WHERE status = 'SCHEDULED'
+    AND start_time <= NOW()
+    RETURNING *
+     `;
+        const result = await db.query(query);
+        return result.rows[0];
+    }
     async create(slotData) {
         const query = `
             INSERT INTO tournament_slots (
