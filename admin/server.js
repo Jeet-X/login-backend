@@ -4,7 +4,6 @@ require('dotenv').config();
 const app = require('@/app');
 const logger = require('@/utils/logger');
 const { initializeConfig } = require('./config');
-const notificationScheduler = require('@/jobs/notificationScheduler');
 
 
 const PORT = process.env.PORT || 3000;
@@ -13,7 +12,6 @@ const PORT = process.env.PORT || 3000;
 initializeConfig()
     .then(() => {
         // Start server only after config is ready
-        notificationScheduler.init();
         app.listen(PORT, () => {
             logger.info(`🚀 Server running on port ${PORT}`);
             logger.info(`📍 Environment: ${process.env.NODE_ENV}`);
@@ -21,7 +19,6 @@ initializeConfig()
     })
     .catch((error) => {
         logger.error('Failed to initialize:', error);
-        notificationScheduler.stopAll();
 
         process.exit(1);
     });
