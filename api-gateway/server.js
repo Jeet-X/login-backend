@@ -84,6 +84,17 @@ app.use(
     })
 );
 
+app.use(
+    '/api/v1/wallet',
+    createProxyMiddleware({
+        target: `http://localhost:${process.env.WALLET_PORT}/api/v1/wallet/`,
+        changeOrigin: true,
+        // pathRewrite: {
+        //     '^/admin/api/v1/referral': '',
+        // },
+    })
+);
+
 app.listen(process.env.PORT, () => {
     console.log(`🚀 API Gateway running on port ${process.env.PORT}`);
 });
