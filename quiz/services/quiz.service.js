@@ -41,7 +41,7 @@ class QuizService {
     /**
      * Start Practice Mode
      */
-    async startPractice(userId, subCategoryId, termsAccepted) {
+    async startPractice(userId, subCategoryId) {
         try {
             // Check for active session
             const activeSession = await quizSessionModel.findActiveSession(userId, 'PRACTICE');
@@ -189,7 +189,7 @@ class QuizService {
     /**
      * Join Tournament Slot
      */
-    async joinTournament(userId, slotId, termsAccepted) {
+    async joinTournament(userId, slotId) {
         try {
             const slot = await tournamentSlotModel.findById(slotId);
 

@@ -1,5 +1,5 @@
 {
-  "name": "login-backend",
+  "name": "microservices-backend",
   "version": "1.0.0",
   "description": "microservice for logging in",
   "main": "server.js",
@@ -14,7 +14,16 @@
     "format": "prettier --write \"./**/*.js\"",
     "db:reset": "node database/reset.js",
     "db:check": "node database/check.js",
-    "db:setup": "npm run migrate && npm run seed"
+    "db:setup": "npm run migrate && npm run seed",
+    "gateway": "npm run start --prefix api-gateway",
+    "admin": "npm run start --prefix admin",
+    "auth": "npm run start --prefix auth",
+    "quiz": "npm run start --prefix quiz",
+    "user": "npm run start --prefix user",
+    "notifications": "npm run start --prefix notifications",
+    "wallet": "npm run start --prefix wallet",
+    "referral": "npm run start --prefix referral",
+    "start:all": "concurrently \"npm run gateway\" \"npm run admin\" \"npm run auth\" \"npm run quiz\" \"npm run user\" \"npm run notifications\" \"npm run wallet\" \"npm run referral\""
   },
   "keywords": [
     "authentication",
@@ -52,6 +61,7 @@
     "firebase-admin": "^12.0.0",
     "helmet": "^7.1.0",
     "http": "^0.0.1-security",
+    "http-proxy-middleware": "^3.0.5",
     "jsonwebtoken": "^9.0.3",
     "module-alias": "^2.2.3",
     "mongoose": "^8.20.2",
@@ -67,6 +77,7 @@
     "winston": "^3.11.0"
   },
   "devDependencies": {
+    "concurrently": "^9.2.1",
     "eslint": "^8.55.0",
     "jest": "^29.7.0",
     "nodemon": "^3.0.2",
