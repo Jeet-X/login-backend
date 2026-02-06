@@ -15,7 +15,6 @@
     "db:reset": "node database/reset.js",
     "db:check": "node database/check.js",
     "db:setup": "npm run migrate && npm run seed",
-    "gateway": "npm run start --prefix api-gateway",
     "admin": "npm run start --prefix admin",
     "auth": "npm run start --prefix auth",
     "quiz": "npm run start --prefix quiz",
@@ -23,7 +22,7 @@
     "notifications": "npm run start --prefix notifications",
     "wallet": "npm run start --prefix wallet",
     "referral": "npm run start --prefix referral",
-    "start:all": "concurrently \"npm run gateway\" \"npm run admin\" \"npm run auth\" \"npm run quiz\" \"npm run user\" \"npm run notifications\" \"npm run wallet\" \"npm run referral\""
+    "start:all": "concurrently \"npm run admin\" \"npm run auth\" \"npm run quiz\" \"npm run user\" \"npm run notifications\" \"npm run wallet\" \"npm run referral\""
   },
   "keywords": [
     "authentication",
