@@ -95,6 +95,8 @@ CREATE TABLE IF NOT EXISTS tournament_slots (
     timer_duration INTEGER NOT NULL,
     platform_fee_percentage INTEGER DEFAULT 20,
     reward_distribution JSONB NOT NULL,
+    terms_content TEXT NOT NULL,
+    terms_version VARCHAR(50) NOT NULL,
     status VARCHAR(20) DEFAULT 'SCHEDULED' CHECK (
         status IN (
             'SCHEDULED',

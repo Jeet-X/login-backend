@@ -20,13 +20,13 @@ async function runMigrations() {
 
         // Read schema file
         // eslint-disable-next-line no-undef
-        const schemaPath = path.join(__dirname, 'schema.sql');
+        // const schemaPath = path.join(__dirname, 'schema.sql');
 
         // eslint-disable-next-line no-undef
         const quizSchemaPath = path.join(__dirname, 'quiz.schema.sql');
 
         const schemaArrays = [
-            schemaPath,
+            // schemaPath,
             quizSchemaPath
         ]
 

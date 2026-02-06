@@ -65,27 +65,6 @@ npm run test:watch
 npm test -- --coverage
 ```
 
-## Project Structure
-
-```
-auth-backend/
-│   ├── config/         # Configuration files
-│   ├── controllers/    # Request handlers
-│   ├── middleware/     # Express middleware
-│   ├── models/         # Database models
-│   ├── routes/         # API routes
-│   ├── services/       # Business logic
-│   ├── utils/          # Helper functions
-│   ├── app.js          # Express app setup
-│   └── server.js       # Server entry point
-├── database/
-│   ├── migrations/     # Database migrations
-│   ├── seeds/          # Seed data
-│   └── schema.sql      # Database schema
-├── tests/              # Test files
-└── logs/               # Application logs
-```
-
 ## License
 
 MIT
