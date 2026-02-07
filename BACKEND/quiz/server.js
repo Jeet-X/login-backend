@@ -13,8 +13,8 @@ initializeConfig()
     .then(() => {
         // Start server only after config is ready
         app.listen(PORT, () => {
-            logger.info(`🚀 Server running on port ${PORT}`);
-            logger.info(`📍 Environment: ${process.env.NODE_ENV}`);
+            logger.info(`Server running on port ${PORT}`);
+            logger.info(`Environment: ${process.env.NODE_ENV}`);
         });
     })
     .catch((error) => {
