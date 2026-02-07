@@ -3,6 +3,7 @@ const express = require('express');
 const cors = require('cors');
 const helmet = require('helmet');
 const v1Routes = require('@/routes/index.js');
+const clientInfoMiddleware = require('@/middleware/clientInfo.middleware')
 
 
 const errorHandler = require('@/middleware/errorHandler.middleware');
@@ -26,6 +27,7 @@ app.use((req, res, next) => {
     logger.info(`${req.method} ${req.path}`);
     next();
 });
+app.use(clientInfoMiddleware);
 
 // Health check
 app.get('/health', (req, res) => {

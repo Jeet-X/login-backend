@@ -15,6 +15,7 @@ class QuizService {
     async getEntryOptions(userId, subCategoryId) {
         const wallet = await walletService.getBalance(userId);
         const practiceConfig = await practiceConfigModel.findBySubCategory(subCategoryId);
+        await tournamentSlotModel.updateAllStatus();
         const tournamentSlots = await tournamentSlotModel.findActiveSlots(subCategoryId);
 
         return {
@@ -40,7 +41,7 @@ class QuizService {
     /**
      * Start Practice Mode
      */
-    async startPractice(userId, subCategoryId, termsAccepted) {
+    async startPractice(userId, subCategoryId, clientInfo) {
         try {
             // Check for active session
             const activeSession = await quizSessionModel.findActiveSession(userId, 'PRACTICE');
@@ -109,7 +110,8 @@ class QuizService {
             });
 
             // Log terms acceptance
-            await this.logTermsAcceptance(userId, 'PRACTICE', session.id, config.terms_version);
+
+            await this.logTermsAcceptance(userId, 'PRACTICE', session.id, config.terms_version, clientInfo);
 
             return {
                 session_id: session.id,
@@ -188,7 +190,7 @@ class QuizService {
     /**
      * Join Tournament Slot
      */
-    async joinTournament(userId, slotId, termsAccepted) {
+    async joinTournament(userId, slotId, clientInfo) {
         try {
             const slot = await tournamentSlotModel.findById(slotId);
 
@@ -256,7 +258,7 @@ class QuizService {
             await tournamentSlotModel.incrementPlayerCount(slotId);
 
             // Log terms acceptance
-            await this.logTermsAcceptance(userId, 'TOURNAMENT', session.id, 'v1.0');
+            await this.logTermsAcceptance(userId, 'TOURNAMENT', session.id, 'v1.0', clientInfo);
 
             return {
                 session_id: session.id,
@@ -510,13 +512,15 @@ class QuizService {
     /**
      * Log Terms Acceptance
      */
-    async logTermsAcceptance(userId, context, referenceId, termsVersion) {
+    async logTermsAcceptance(userId, context, referenceId, termsVersion, clientInfo) {
+        const browserInfo = `${clientInfo?.os.toString()} ${clientInfo?.browser.toString()}`
+        const deviceInfo = `${clientInfo?.deviceType === "mobile" ? clientInfo?.os : browserInfo}`
         const query = `
             INSERT INTO terms_acceptance_logs (
-                user_id, context, reference_id, terms_version
+                user_id, context, reference_id, terms_version,ip_address,device_info
             ) VALUES ($1, $2, $3, $4)
         `;
-        await db.query(query, [userId, context, referenceId, termsVersion]);
+        await db.query(query, [userId, context, referenceId, termsVersion, clientInfo?.ip, deviceInfo]);
     }
 
     /**

@@ -31,6 +31,7 @@ class QuizController {
      */
     async startPractice(req, res) {
         try {
+            const clientInfo = req.clientInfo
             const userId = req.user.id;
             const { sub_category_id, terms_accepted } = req.body;
 
@@ -41,7 +42,7 @@ class QuizController {
                 });
             }
 
-            const session = await quizService.startPractice(userId, sub_category_id, terms_accepted);
+            const session = await quizService.startPractice(userId, sub_category_id, clientInfo);
 
             res.status(201).json({
                 success: true,
@@ -120,7 +121,7 @@ class QuizController {
                 });
             }
 
-            const result = await quizService.joinTournament(userId, slot_id, terms_accepted);
+            const result = await quizService.joinTournament(userId, slot_id, req.clientInfo);
 
             res.status(201).json({
                 success: true,
