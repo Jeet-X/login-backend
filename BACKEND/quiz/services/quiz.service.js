@@ -16,7 +16,7 @@ class QuizService {
         const wallet = await walletService.getBalance(userId);
         const practiceConfig = await practiceConfigModel.findBySubCategory(subCategoryId);
         await tournamentSlotModel.updateAllStatus();
-        const tournamentSlots = await tournamentSlotModel.findActiveSlots(subCategoryId);
+        const tournamentSlots = await tournamentSlotModel.findActiveSlots(userId, subCategoryId);
 
         return {
             wallet_balance: wallet.coin_balance,

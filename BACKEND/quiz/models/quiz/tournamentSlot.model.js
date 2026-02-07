@@ -12,7 +12,7 @@ class TournamentSlotModel {
         return result.rows[0];
     }
 
-    async findActiveSlots(subCategoryId = null) {
+    async findActiveSlots(subCategoryId = null, userId = null) {
         let query = `
             SELECT
                 ts.*,
@@ -22,13 +22,6 @@ class TournamentSlotModel {
                 tournament_slots ts
             JOIN
                 quiz_sub_categories qsc ON ts.sub_category_id = qsc.id
-            WHERE ts.status IN ('SCHEDULED','ACTIVE')
-            AND ts.current_players < ts.max_players
-            AND (
-                (ts.status = 'SCHEDULED' AND ts.end_time > NOW())
-                OR
-                (ts.status = 'ACTIVE')
-            )
             `;
         const params = [];
 
@@ -36,8 +29,49 @@ class TournamentSlotModel {
             query += ' AND ts.sub_category_id = $1';
             params.push(subCategoryId);
         }
+        if (userId) {
+            query += ` WHERE
+                ts.current_players < ts.max_players
+                AND (
+                    (
+                        ts.status = 'SCHEDULED'
+                        AND ts.end_time > NOW()
+                    )
+                    OR
+                    (
+                        ts.status = 'ACTIVE'
+                        AND EXISTS (
+                            SELECT 1
+                            FROM quiz_sessions qs
+                            WHERE qs.slot_id = ts.id
+                                AND qs.user_id = $2
+                                AND qs.mode = 'TOURNAMENT'
+                        )
+                    )
+                )`
+            params.push(userId)
+        } else {
+            query += ` WHERE 
+                ts.status IN ('SCHEDULED','ACTIVE')
+                AND ts.current_players < ts.max_players
+                AND (
+                        (ts.status = 'SCHEDULED' AND ts.end_time > NOW()
+                    )
+                OR
+                    (
+                        ts.status = 'ACTIVE'
+                    )
+                )`
+        }
 
-        query += ' ORDER BY ts.start_time ASC';
+        query += ` ORDER BY
+    CASE
+        WHEN ts.status = 'ACTIVE' THEN 1
+        WHEN ts.status = 'SCHEDULED' THEN 2
+        ELSE 3
+    END,
+    ts.start_time ASC;`;
+        console.log(query, params)
         const result = await db.query(query, params);
         return result.rows;
     }
