@@ -1,0 +1,86 @@
+{
+  "name": "microservices-backend",
+  "version": "1.0.0",
+  "description": "microservice for logging in",
+  "main": "server.js",
+  "scripts": {
+    "migrate": "node database/migrate.js",
+    "seed": "node database/seeds/seed.js",
+    "test": "jest --coverage",
+    "test:watch": "jest --watch",
+    "lint": "eslint ./**/*.js",
+    "start": "node server.js",
+    "dev": "nodemon server.js",
+    "format": "prettier --write \"./**/*.js\"",
+    "db:reset": "node database/reset.js",
+    "db:check": "node database/check.js",
+    "db:setup": "npm run migrate && npm run seed",
+    "install-admin": "npm install --prefix admin",
+    "install-auth": "npm install --prefix auth",
+    "install-quiz": "npm install --prefix quiz",
+    "install-user": "npm install --prefix user",
+    "install-notifications": "npm install --prefix notifications",
+    "install-wallet": "npm install --prefix wallet",
+    "install-referral": "npm install --prefix referral",
+    "admin": "npm run start --prefix admin",
+    "auth": "npm run start --prefix auth",
+    "quiz": "npm run start --prefix quiz",
+    "user": "npm run start --prefix user",
+    "notifications": "npm run start --prefix notifications",
+    "wallet": "npm run start --prefix wallet",
+    "referral": "npm run start --prefix referral",
+    "install:all": "concurrently \"npm run install-admin\" \"npm run install-auth\" \"npm run install-quiz\" \"npm run install-user\" \"npm run install-notifications\" \"npm run install-wallet\" \"npm run install-referral\"",
+    "start:all": "concurrently \"npm run admin\" \"npm run auth\" \"npm run quiz\" \"npm run user\" \"npm run notifications\" \"npm run wallet\" \"npm run referral\""
+  },
+  "keywords": [
+    "authentication",
+    "firebase",
+    "postgresql",
+    "redis",
+    "express",
+    "jwt"
+  ],
+  "_moduleAliases": {
+    "@": "./"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Jeet-X/login-backend.git"
+  },
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/Jeet-X/login-backend/issues"
+  },
+  "homepage": "https://github.com/Jeet-X/login-backend#readme",
+  "dependencies": {
+    "@prisma/client": "^6.19.1",
+    "compression": "^1.8.1",
+    "cors": "^2.8.5",
+    "dotenv": "^17.2.3",
+    "eslint": "^9.39.1",
+    "express": "^5.2.1",
+    "express-validator": "^7.0.1",
+    "helmet": "^7.1.0",
+    "http": "^0.0.1-security",
+    "http-proxy-middleware": "^3.0.5",
+    "module-alias": "^2.2.3",
+    "mongoose": "^8.20.2",
+    "nodemon": "^3.1.11",
+    "sanitize-html": "^2.17.0"
+  },
+  "devDependencies": {
+    "concurrently": "^9.2.1",
+    "eslint": "^8.55.0",
+    "jest": "^29.7.0",
+    "nodemon": "^3.0.2",
+    "prettier": "^3.1.1",
+    "supertest": "^6.3.4"
+  },
+  "jest": {
+    "testEnvironment": "node",
+    "coveragePathIgnorePatterns": [
+      "/node_modules/"
+    ]
+  }
+}

@@ -1,0 +1,5 @@
+<resources>
+    <string name="app_name">JeetX</string>
+    <string name="facebook_app_id">REPLACE_WITH_YOUR_APP_ID</string>
+    <string name="facebook_client_token">REPLACE_WITH_YOUR_CLIENT_TOKEN</string>
+</resources>

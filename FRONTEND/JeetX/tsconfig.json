@@ -1,0 +1,20 @@
+{
+  "extends": "@react-native/typescript-config",
+  "compilerOptions": {
+    "esModuleInterop": true,
+    "allowSyntheticDefaultImports": true, // optional but recommended
+    "module": "esnext", // optional depending on setup
+    "jsx": "react-jsx", // optional depending on setup
+    "types": [
+      "jest"
+    ],
+  },
+  "include": [
+    "**/*.ts",
+    "**/*.tsx"
+  ],
+  "exclude": [
+    "**/node_modules",
+    "**/Pods"
+  ]
+}
